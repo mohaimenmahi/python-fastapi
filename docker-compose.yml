@@ -1,0 +1,13 @@
+services:
+  api:
+    container_name: python-fastapi
+    env_file:
+      - .env
+    build:
+      context: .
+      target: ${ENVIRONMENT:-development}
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - .:/app
