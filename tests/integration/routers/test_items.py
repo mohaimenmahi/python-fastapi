@@ -5,6 +5,8 @@ async def test_public_list_and_get_do_not_require_auth(client, authenticated_cli
     assert create_response.status_code == 201
     item_id = create_response.json()["id"]
 
+    client.cookies.clear()
+
     list_response = await client.get("/items")
     assert list_response.status_code == 200
     assert any(item["id"] == item_id for item in list_response.json())
