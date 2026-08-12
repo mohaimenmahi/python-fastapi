@@ -8,6 +8,7 @@ from app.repositories.item_repository import ItemRepository
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.repositories.role_repository import RoleRepository
 from app.repositories.user_repository import UserRepository
+from app.services.auth_service import AuthService
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
@@ -31,3 +32,11 @@ def get_refresh_token_repository(
 
 def get_item_repository(session: AsyncSession = Depends(get_db_session)) -> ItemRepository:
     return ItemRepository(session)
+
+
+def get_auth_service(
+    user_repository: UserRepository = Depends(get_user_repository),
+    role_repository: RoleRepository = Depends(get_role_repository),
+    refresh_token_repository: RefreshTokenRepository = Depends(get_refresh_token_repository),
+) -> AuthService:
+    return AuthService(user_repository, role_repository, refresh_token_repository)
