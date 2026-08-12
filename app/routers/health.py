@@ -1,7 +1,11 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 
-router = FastAPI()
+from app.core.auth import public
+
+router = APIRouter()
+
 
 @router.get("/health")
+@public
 def get_health() -> dict[str, str]:
-  return {"status": "ok"}
+    return {"status": "ok"}
