@@ -1,12 +1,10 @@
-from app.models.role import Role
 from app.repositories.role_repository import RoleRepository
 from app.repositories.user_repository import UserRepository
 
 
 async def test_assign_role_and_get_user_with_roles(db_session):
-    db_session.add(Role(name="user"))
-    await db_session.commit()
-
+    # "user" role is seeded by the _create_schema fixture (mirrors the Task 8
+    # data migration), so it already exists — no need to create it here.
     users = UserRepository(db_session)
     roles = RoleRepository(db_session)
 
