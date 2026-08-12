@@ -20,7 +20,9 @@ async def _create_schema():
 async def db_session():
     async with test_engine.connect() as connection:
         await connection.begin()
-        session = AsyncSession(bind=connection, join_transaction_mode="create_savepoint")
+        session = AsyncSession(
+            bind=connection, join_transaction_mode="create_savepoint", expire_on_commit=False
+        )
         yield session
         await session.close()
         await connection.rollback()
