@@ -70,6 +70,7 @@ async def admin_client(client, db_session):
 
     from app.models.role import Role
     from app.models.user import User
+    from app.repositories.role_repository import RoleRepository
 
     await client.post(
         "/auth/register", json={"email": "admin@example.com", "password": "Passw0rd!"}
@@ -78,8 +79,7 @@ async def admin_client(client, db_session):
         await db_session.execute(select(User).where(User.email == "admin@example.com"))
     ).scalar_one()
     admin_role = (await db_session.execute(select(Role).where(Role.name == "admin"))).scalar_one()
-    user.roles.append(admin_role)
-    await db_session.commit()
+    await RoleRepository(db_session).assign_role(user, admin_role)
 
     await client.post("/auth/login", json={"email": "admin@example.com", "password": "Passw0rd!"})
     return client
