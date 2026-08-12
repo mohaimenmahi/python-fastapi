@@ -1,6 +1,7 @@
 import pytest
 from fastapi import Response
 
+from app.core.security import hash_refresh_token
 from app.services.auth_service import AuthService, EmailAlreadyRegisteredError, InvalidCredentialsError
 from tests.unit.services.fakes import FakeRefreshTokenRepository, FakeRole, FakeRoleRepository, FakeUserRepository
 
@@ -37,7 +38,7 @@ async def test_login_sets_cookies_on_success():
 
     await service.login("a@example.com", "s3cret!", response)
 
-    assert "access_token" in response.headers.get("set-cookie", "")
+    assert _extract_cookie_value(response, "access_token")
 
 
 async def test_login_wrong_password_raises():
@@ -58,7 +59,14 @@ async def test_refresh_rotates_token():
     refresh_response = Response()
     await service.refresh(raw_refresh, refresh_response)
 
-    assert "access_token" in refresh_response.headers.get("set-cookie", "")
+    assert _extract_cookie_value(refresh_response, "access_token")
+    new_refresh = _extract_cookie_value(refresh_response, "refresh_token")
+    assert new_refresh != raw_refresh
+
+    old = service.refresh_token_repository._tokens[hash_refresh_token(raw_refresh)]
+    new = service.refresh_token_repository._tokens[hash_refresh_token(new_refresh)]
+    assert old.revoked_at is not None
+    assert old.replaced_by_id == new.id
 
 
 async def test_refresh_reuse_of_revoked_token_revokes_all_and_raises():
@@ -72,6 +80,10 @@ async def test_refresh_reuse_of_revoked_token_revokes_all_and_raises():
 
     with pytest.raises(InvalidCredentialsError):
         await service.refresh(raw_refresh, Response())  # reuse of the now-revoked token
+
+    tokens = list(service.refresh_token_repository._tokens.values())
+    assert len(tokens) == 2
+    assert all(t.revoked_at is not None for t in tokens)
 
 
 def _extract_cookie_value(response: Response, cookie_name: str) -> str:
